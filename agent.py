@@ -13,16 +13,18 @@ def search_financial_data(ticker):
     with DDGS() as ddgs:
         all_results = []
         queries = [
-            f"{ticker} resultados financeiros 2024 4T24 3T24",
+            f"{ticker} resultados financeiros 4T24 2024",
             f"{ticker} lucro líquido receita 2024",
             f"{ticker} valor de mercado market cap",
-            f"{ticker} official company name"
+            f"{ticker} investor relations IR results"
         ]
         for query in queries:
-            results = list(ddgs.text(query, max_results=8))
+            results = list(ddgs.text(query, max_results=10))
             all_results.extend(results)
         
-        return all_results
+        # Deduplicate and sort by potential relevance (simple heuristic)
+        unique_results = {r['href']: r for r in all_results}.values()
+        return list(unique_results)
 
 def process_with_llm(ticker, search_results):
     client = OpenAI(
@@ -30,29 +32,30 @@ def process_with_llm(ticker, search_results):
         api_key=OPENROUTER_API_KEY,
     )
     
-    # Remove duplicate snippets by URL
-    unique_results = {r['href']: r for r in search_results}.values()
-    context = "\n".join([f"Source: {r['href']}\nContent: {r['body']}" for r in unique_results])
+    context = "\n".join([f"Source: {r['href']}\nContent: {r['body']}" for r in search_results[:25]])
     
     prompt = f"""
-    You are a Senior Equity Analyst. Based on the following search results for the ticker {ticker}, extract the latest financial data for the year 2024.
-    If 2024 annual data is not yet available, prioritize the most recent quarterly data from 2024 (e.g., 4T24, 3T24).
+    You are a Senior Equity Analyst. Your task is to extract the latest 2024 financial data for {ticker}.
+    
+    IMPORTANT: 
+    - Check if the source snippet is ACTUALLY about {ticker}. 
+    - If data is from 2024 (e.g., 4T24, 3T24, 2T24, 1T24 or Annual), prioritize it.
+    - You MUST populate 'revenue_brl', 'net_income_brl', and 'market_cap_brl' if the data is present anywhere in the search results.
     
     Search Results:
     {context}
     
     Requirements:
-    1. Extract the official company name.
-    2. Extract Revenue (Receita) in BRL. You MUST cite the source URL for this specific value (e.g., "R$ 100B [URL]").
-    3. Extract Net Income (Lucro Líquido) in BRL. You MUST cite the source URL for this specific value (e.g., "R$ 10B [URL]").
-    4. Extract Market Cap (Valor de Mercado) in BRL. You MUST cite the source URL for this specific value (e.g., "R$ 500B [URL]").
-    5. Provide 3 key highlights from the 2024 results. Each highlight MUST have a source citation.
-    6. All values must be in BRL (R$). If found in USD, convert approximately if possible or state it's in USD but requirement is BRL.
-    7. If any specific metric is missing, state "Data not found in sources".
+    1. Company Name: Full official name for {ticker}.
+    2. Revenue (Receita): The most recent 2024 value found. Format: "R$ X.X Billions/Millions [URL]".
+    3. Net Income (Lucro Líquido): The most recent 2024 value found. Format: "R$ X.X Billions/Millions [URL]".
+    4. Market Cap: The most recent value found. Format: "R$ X.X Billions/Millions [URL]".
+    5. Highlights: 3 key points from 2024 results, each MUST have a [URL].
+    6. Sources: Comprehensive list of all unique URLs used.
     
-    Do not hallucinate. Use only the provided context.
+    If a specific metric is missing, use "Data not found in sources".
     
-    Output MUST be a valid JSON object with the following keys:
+    Output MUST be a valid JSON object:
     {{
         "ticker": "{ticker}",
         "company_name": "...",
@@ -60,10 +63,10 @@ def process_with_llm(ticker, search_results):
         "net_income_brl": "...",
         "market_cap_brl": "...",
         "key_highlights": ["... [URL]", "... [URL]", "... [URL]"],
-        "sources": ["...", "..."]
+        "sources": ["URL1", "URL2"]
     }}
     
-    Return ONLY the JSON object.
+    Return ONLY JSON.
     """
     
     response = client.chat.completions.create(
