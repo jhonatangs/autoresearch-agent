@@ -1,6 +1,7 @@
 import sys
 import json
 import os
+import re
 from dotenv import load_dotenv
 from duckduckgo_search import DDGS
 from openai import OpenAI
@@ -82,7 +83,20 @@ def main():
         print("Usage: python agent.py <ticker>")
         sys.exit(1)
         
-    ticker = sys.argv[1]
+    input_str = sys.argv[1]
+    
+    # Try to extract ticker (4 uppercase characters + 1-2 digits)
+    ticker_match = re.search(r'\b([A-Z]{4}[0-9]{1,2})\b', input_str.upper())
+    if ticker_match:
+        ticker = ticker_match.group(1)
+    else:
+        # Try to find anything in parentheses
+        paren_match = re.search(r'\(([A-Z0-9]+)\)', input_str.upper())
+        if paren_match:
+            ticker = paren_match.group(1)
+        else:
+            # Fallback to first word if it looks like a ticker
+            ticker = input_str.split()[0].upper()
     
     try:
         search_results = search_financial_data(ticker)
