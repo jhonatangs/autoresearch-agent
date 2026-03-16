@@ -10,7 +10,7 @@ This system is an automated, self-improving research pipeline designed to build 
 
 ## Components & Roles
 
-### 1. The Orchestrator (Claude Haiku 4.5 via Copilot)
+### 1. The Orchestrator (Gemini 3 Flash via Antigravity)
 - **Role:** Autonomous Developer and Version Controller.
 - **Goal:** Iteratively write and improve `agent.py` up to 20 times.
 - **Dynamic Testing:** The Orchestrator MUST test a DIFFERENT randomly selected corporate ticker in each iteration via `sys.argv`.
