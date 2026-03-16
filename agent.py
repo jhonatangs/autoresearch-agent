@@ -41,16 +41,19 @@ def process_with_llm(ticker, search_results):
     IMPORTANT: 
     - Check if the source snippet is ACTUALLY about {ticker}. 
     - If data is from 2024 (e.g., 4T24, 3T24, 2T24, 1T24 or Annual), prioritize it.
-    - CURRENCY: All final values MUST be in BRL (R$). If the data is only available in USD (common for BDRs like ROXO34), convert it to BRL using an approximate rate of 1 USD = 6.0 BRL and CLEARLY note the conversion in the string.
+    - CURRENCY & UNITS: All final values MUST be in BRL (R$). 
+      - Use "Billions" or "Millions" consistently (e.g., "R$ 10.5 Billion"). 
+      - Be extremely careful: "10 bilhões" in Portuguese means "10 Billion". 
+      - If data is in USD, convert to BRL using 1 USD = 6.0 BRL and note "(Converted from USD)".
     
     Search Results:
     {context}
     
     Requirements:
     1. Company Name: Full official name for {ticker}.
-    2. Revenue (Receita): The most recent 2024 value. Format: "R$ X.X Billions/Millions [URL]" (note conversion if needed).
-    3. Net Income (Lucro Líquido): The most recent 2024 value. Format: "R$ X.X Billions/Millions [URL]" (note conversion if needed).
-    4. Market Cap: The most recent value found. Format: "R$ X.X Billions/Millions [URL]".
+    2. Revenue (Receita): The most recent 2024 value. Format: "R$ X.X Billion/Million [URL]".
+    3. Net Income (Lucro Líquido): The most recent 2024 value. Format: "R$ X.X Billion/Million [URL]".
+    4. Market Cap: The most recent value found. Format: "R$ X.X Billion/Million [URL]".
     5. Highlights: 3 key points from 2024 results. YOU MUST append the source URL to each highlight string.
     6. Sources: Comprehensive list of all unique URLs used.
     
