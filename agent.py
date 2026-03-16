@@ -13,13 +13,13 @@ def search_financial_data(ticker):
     with DDGS() as ddgs:
         all_results = []
         queries = [
-            f"{ticker} resultados financeiros 2024 4T24",
-            f"{ticker} central de resultados 2024",
-            f"{ticker} revenue net income 2024",
-            f"{ticker} valor de mercado"
+            f"{ticker} resultados financeiros 2024 4T24 3T24",
+            f"{ticker} lucro líquido receita 2024",
+            f"{ticker} valor de mercado market cap",
+            f"{ticker} official company name"
         ]
         for query in queries:
-            results = list(ddgs.text(query, max_results=5))
+            results = list(ddgs.text(query, max_results=8))
             all_results.extend(results)
         
         return all_results
@@ -30,25 +30,26 @@ def process_with_llm(ticker, search_results):
         api_key=OPENROUTER_API_KEY,
     )
     
-    context = "\n".join([f"Source: {r['href']}\nContent: {r['body']}" for r in search_results])
+    # Remove duplicate snippets by URL
+    unique_results = {r['href']: r for r in search_results}.values()
+    context = "\n".join([f"Source: {r['href']}\nContent: {r['body']}" for r in unique_results])
     
     prompt = f"""
     You are a Senior Equity Analyst. Based on the following search results for the ticker {ticker}, extract the latest financial data for the year 2024.
-    If 2024 annual data is not yet available, prioritize the most recent quarterly data from 2024 (e.g., 4T24 or 3T24).
+    If 2024 annual data is not yet available, prioritize the most recent quarterly data from 2024 (e.g., 4T24, 3T24).
     
     Search Results:
     {context}
     
     Requirements:
     1. Extract the official company name.
-    2. Extract Revenue (Receita) in BRL. Format as "R$ X.X Billions" or "R$ X.X Millions".
-    3. Extract Net Income (Lucro Líquido) in BRL. Format as "R$ X.X Billions" or "R$ X.X Millions".
-    4. Extract Market Cap (Valor de Mercado) in BRL. Format as "R$ X.X Billions" or "R$ X.X Millions".
-    5. Provide 3 key highlights from the 2024 results.
-    6. Sources: You MUST cite where each piece of data came from using [SOURCE URL] next to the value.
-    7. FINAL JSON: Include a "sources" list with all unique URLs used.
+    2. Extract Revenue (Receita) in BRL. You MUST cite the source URL for this specific value (e.g., "R$ 100B [URL]").
+    3. Extract Net Income (Lucro Líquido) in BRL. You MUST cite the source URL for this specific value (e.g., "R$ 10B [URL]").
+    4. Extract Market Cap (Valor de Mercado) in BRL. You MUST cite the source URL for this specific value (e.g., "R$ 500B [URL]").
+    5. Provide 3 key highlights from the 2024 results. Each highlight MUST have a source citation.
+    6. All values must be in BRL (R$). If found in USD, convert approximately if possible or state it's in USD but requirement is BRL.
+    7. If any specific metric is missing, state "Data not found in sources".
     
-    If any specific metric is missing, state "Data not found in sources".
     Do not hallucinate. Use only the provided context.
     
     Output MUST be a valid JSON object with the following keys:
@@ -58,7 +59,7 @@ def process_with_llm(ticker, search_results):
         "revenue_brl": "...",
         "net_income_brl": "...",
         "market_cap_brl": "...",
-        "key_highlights": ["...", "...", "..."],
+        "key_highlights": ["... [URL]", "... [URL]", "... [URL]"],
         "sources": ["...", "..."]
     }}
     
