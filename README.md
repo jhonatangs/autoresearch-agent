@@ -56,8 +56,6 @@ Pensando em escalabilidade para o setor financeiro (Asset Management e Venture C
 1. **RAG (Retrieval-Augmented Generation) para PDFs Oficiais:** A transição de web scraping de portais de notícias para a leitura direta de demonstrações financeiras (ITRs/DFPs) nos sites de Relações com Investidores (RI) ou CVM. Isso envolveria um banco vetorial leve (como FAISS ou ChromaDB) para fatiar PDFs e garantir precisão contábil na fonte primária.
 2. **Validação Cruzada e Comitê Multi-Agente:** Em vez de um único pesquisador, o sistema seria orquestrado por personas distintas: um agente focado na coleta (The Researcher), um agente focado em estressar os balanços e cruzar fontes diferentes para o mesmo dado (The Bear), e um orquestrador final para sintetizar um Investment Memo automatizado.
 
---
-
 ## 🧪 Outros Experimentos
 
 Outros experimentos podem ser encontrados em:
